@@ -1,0 +1,7 @@
+package-lock.json
+# dependencies
+/node_modules
+.env 
+
+# Ignore build output
+/dist
