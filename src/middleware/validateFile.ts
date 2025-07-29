@@ -1,12 +1,15 @@
 import { NextFunction, Request, Response } from "express";
 import crypto from "crypto";
 
-export const checkValidFileUpload = (
+export const checkUploadTimeStamp = (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
   try {
+    console.log("req.query----->", req.query);
+    console.log("req.params----->", req.params);
+    console.log("req.body.data----->", req.body);
     const { auth_signature, auth_timestamp } = req.query;
     const { companyId, type } = req.params;
 
@@ -52,25 +55,28 @@ export const hashMiddleware = async (
   };
 
   console.log("appConfig----->", appConfig);
-  try {
-    //get app config by auth key and app id
-    // parsed formDate
-    // filename from the uploaded file
-    //Check for the filesize and file mime type by running the signature check
 
+  console.log("request.file----->", request.file);
+  try {
     if (
       appConfig.authKey !== auth_key ||
-      !checkAuthSignature(appConfig, auth_signature, auth_timestamp, {
-        body: {
-          mimeType: request.file?.mimetype,
-          size: request.file?.size,
-          fileName: request.file?.originalname,
-          type: type,
+      !checkAuthSignature(
+        appConfig,
+        auth_signature,
+        auth_timestamp,
+        {
+          body: {
+            mimeType: request.file?.mimetype,
+            size: request.file?.size,
+            fileName: request.file?.originalname,
+            type: type,
+          },
+          path: request.baseUrl + request.path,
+          method: request.method,
+          query: request.query,
         },
-        path: request.baseUrl + request.path,
-        method: request.method,
-        query: request.query,
-      })
+        request
+      )
     ) {
       throw new Error(`Authorization failed at step ${!appConfig ? "1" : "2"}`);
     } else {
@@ -83,6 +89,7 @@ export const hashMiddleware = async (
       .send({ status: "failed", error: "Authorization failed." });
   }
 };
+
 /**
  * @param {Object} config: Application config
  * @param {String} auth_signature: Auth signature from request
@@ -94,7 +101,8 @@ const checkAuthSignature = (
   config: any,
   auth_signature: any,
   auth_timestamp: any,
-  { body, path, method, query }: any
+  { body, path, method, query }: any,
+  request: Request
 ) => {
   try {
     const RESERVED_QUERY_KEYS: any = {
@@ -126,6 +134,8 @@ const checkAuthSignature = (
         }
       }
     }
+    console.log("body----->", body);
+    request.body = body;
 
     if (body) {
       params.body_md5 = getMD5(JSON.stringify(toOrderedArray(body)));

@@ -1,4 +1,8 @@
-import { S3Client, PutObjectCommand, ListObjectsV2Command } from "@aws-sdk/client-s3";
+import {
+  S3Client,
+  PutObjectCommand,
+  ListObjectsV2Command,
+} from "@aws-sdk/client-s3";
 import { Bucket } from "./configuration";
 import dotenv from "dotenv";
 dotenv.config();
@@ -24,47 +28,13 @@ export async function cleanFilename(filename: string): Promise<string> {
   return cleanedFilename;
 }
 
-
-  /**
-   * @method getTotalSize
-   * @param {string} Key - The prefix of the files to list.
-   * @returns {Promise<number>} - The total size of all objects with the given prefix.
-   * @description Calculates and returns the total size of all objects in the bucket that match the given prefix.
-   */
+/**
+ * @method getTotalSize
+ * @param {string} Key - The prefix of the files to list.
+ * @returns {Promise<number>} - The total size of all objects with the given prefix.
+ * @description Calculates and returns the total size of all objects in the bucket that match the given prefix.
+ */
 export async function getTotalSize(Key: string): Promise<Number> {
-    try {
-      const newS3Client = new S3Client({
-        credentials: {
-          accessKeyId: amazonS3Config.accessKey,
-          secretAccessKey: amazonS3Config.secretKey,
-        },
-        region: amazonS3Config.bucketRegion,
-      });
-
-      const command = new ListObjectsV2Command({
-        Bucket,
-        Prefix: Key,
-      });
-
-      const data = await newS3Client.send(command);
-      newS3Client.destroy();
-
-      const totalSize: Number =
-        (data?.Contents || []).reduce((acc: any, obj: any) => {
-          return acc + obj.Size;
-        }, 0) || 0;
-
-      return totalSize;
-    } catch (error: any) {
-      throw new Error(error);
-    }
-  }
-
-export async function uploadFile(
-  Key: string,
-  Body: string,
-  mimetype: string
-): Promise<string> {
   try {
     const newS3Client = new S3Client({
       credentials: {
@@ -74,20 +44,47 @@ export async function uploadFile(
       region: amazonS3Config.bucketRegion,
     });
 
-    console.log("uploadFile Key----->", Key);
-    console.log("uploadFile Body----->", Body);
-    console.log("uploadFile mimetype----->", mimetype);
-    console.log("newS3Client----->", newS3Client);
+    const command = new ListObjectsV2Command({
+      Bucket,
+      Prefix: Key,
+    });
 
-    const command = new PutObjectCommand({
+    const data = await newS3Client.send(command);
+    newS3Client.destroy();
+
+    const totalSize: Number =
+      (data?.Contents || []).reduce((acc: any, obj: any) => {
+        return acc + obj.Size;
+      }, 0) || 0;
+
+    return totalSize;
+  } catch (error: any) {
+    throw new Error(error);
+  }
+}
+
+export async function uploadFile(
+  Key: string,
+  Body: Buffer,
+  ContentType: string
+): Promise<string> {
+  try {
+    const client = new S3Client({
+      credentials: {
+        accessKeyId: amazonS3Config.accessKey,
+        secretAccessKey: amazonS3Config.secretKey,
+      },
+      region: amazonS3Config.bucketRegion,
+    });
+
+    const cmd = new PutObjectCommand({
       Bucket: Bucket,
       Key,
       Body,
-      ContentType: mimetype,
+      ContentType,
     });
-    console.log("command----->", command);
-    await newS3Client.send(command);
-    newS3Client.destroy();
+    await client.send(cmd);
+    client.destroy();
 
     return Key;
   } catch (error: any) {
