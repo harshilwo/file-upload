@@ -15,23 +15,17 @@
     "@aws-sdk/client-s3": "^3.850.0",
     "cors": "^2.8.5",
     "dotenv": "^17.2.0",
-    "exceljs": "^4.4.0",
     "express": "^5.1.0",
     "file-type": "^21.0.0",
     "mongoose": "^8.16.4",
     "multer": "^2.0.2",
-    "nodemon": "^3.1.10",
-    "pdf-parse": "^1.1.1",
-    "word-extractor": "^1.0.4",
-    "xlsx": "^0.18.5"
+    "nodemon": "^3.1.10"
   },
   "devDependencies": {
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.3",
     "@types/multer": "^2.0.0",
     "@types/node": "^24.1.0",
-    "@types/pdf-parse": "^1.1.5",
-    "@types/word-extractor": "^1.0.6",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.3"
   }

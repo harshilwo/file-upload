@@ -1,9 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import path from "path";
 import { fileTypeFromBuffer } from "file-type";
-import XLSX from "xlsx";
-import { execSync } from "child_process";
-import { unlinkSync, writeFileSync } from "fs";
 
 // Upload rules for all types
 const uploadRules: Record<
@@ -131,9 +128,7 @@ export const checkFile = async (
       });
     }
 
-    const extDetected = detection.ext;
     const buf = req.file.buffer;
-    const orig = req.file.originalname;
 
     if (detection.mime === "application/pdf") {
       if (!isValidPDF(buf))
@@ -152,49 +147,6 @@ export const checkFile = async (
         )
       ) {
         return res.status(400).json({ error: "Corrupt JPEG image." });
-      }
-    }
-
-    if (extDetected === "xlsx" || extDetected === "docx") {
-      const tmp = `/tmp/${Date.now()}-${orig}`;
-      writeFileSync(tmp, buf);
-      try {
-        execSync(`unzip -t "${tmp}"`, { stdio: "pipe" });
-      } catch {
-        unlinkSync(tmp);
-        return res.status(400).json({
-          error: `Invalid or corrupt ${extDetected.toUpperCase()} file.`,
-        });
-      }
-      unlinkSync(tmp);
-    }
-
-    if (extDetected === "doc") {
-      const tmpin = `/tmp/${Date.now()}-${orig}`,
-        tmpout = `/tmp/${Date.now()}.docx`;
-      writeFileSync(tmpin, buf);
-      try {
-        execSync(
-          `libreoffice --headless --convert-to docx "${tmpin}" --outdir /tmp`,
-          { stdio: "pipe" }
-        );
-      } catch {
-        unlinkSync(tmpin);
-        return res.status(400).json({ error: "Invalid or corrupt DOC file." });
-      }
-      unlinkSync(tmpin);
-      unlinkSync(tmpout);
-    }
-
-    if (extDetected === "xls") {
-      // Legacy XLS: use exceljs or xlsx to attempt read
-      try {
-        const wb = XLSX.read(buf, { type: "buffer" });
-        if (!wb.SheetNames || wb.SheetNames.length === 0) {
-          throw new Error("No sheets");
-        }
-      } catch {
-        return res.status(400).json({ error: "Invalid or corrupt XLS file." });
       }
     }
 

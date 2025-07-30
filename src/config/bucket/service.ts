@@ -23,7 +23,7 @@ const amazonS3Config = {
  */
 export async function cleanFilename(filename: string): Promise<string> {
   const regex = /[^a-zA-Z0-9\-_.]/g;
-  const cleanedFilename = filename.replace(regex, "");
+  const cleanedFilename = filename.replace(regex, "-");
 
   return cleanedFilename;
 }
